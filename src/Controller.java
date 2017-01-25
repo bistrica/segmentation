@@ -59,7 +59,7 @@ public class Controller {
 
 	@FXML
 	protected void load() {
-		int width = 800, width2 = 400;// 500 300
+		int width = 500, width2 = 300;// 500 300
 		originalFrame.setFitWidth(width);
 		originalFrame2.setFitWidth(width);
 		originalFrame3.setFitWidth(width2);
