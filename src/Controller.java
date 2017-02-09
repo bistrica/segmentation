@@ -28,11 +28,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 
 /**
  * 
  * 
- * @author Aleksandra Do³êga
+ * @author Aleksandra Doï¿½ï¿½ga
  * 
  */
 public class Controller {
@@ -53,13 +55,53 @@ public class Controller {
 	@FXML
 	private ImageView originalFrame5;
 
+	Color CYAN = new Color(0, 255, 255);
+	Color BLUE = new Color(0, 0, 255);
+	double H, DAB;
 	int SIZE;
+	private double cells;
 	public static int SEGMENTATION_TYPE;
 	public static String redStainsFilename, blueStainsFilename;
+	public static String infoPic;
+
+	private BufferedImage countOnes(BufferedImage imm, Color color) {
+		int[] pixels = new int[imm.getWidth() * imm.getHeight()];
+		imm.getRGB(0, 0, imm.getWidth(), imm.getHeight(), pixels, 0, imm.getWidth());
+
+		System.out.println("pix " + pixels.length + ",");
+		int xx = 0;
+		for (int i = 0; i < pixels.length; i++) {
+
+			int rgb = pixels[i];
+			int r = (rgb >> 16) & 0xFF;
+			int g = (rgb >> 8) & 0xFF;
+			int b = (rgb & 0xFF);
+
+			// System.out.println("rgb " + r + " " + g + " " + b);
+			if (!(r == color.getRed() && g == color.getGreen() && b == color.getBlue())) {
+				pixels[i] = 0xFF000000;
+				// r = 0;
+				// b = 0;
+				// g = 0;
+			} else
+				xx++;// System.out.println("ccccccccc");
+
+		}
+		System.out.println(color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + " CCC " + xx);
+		imm.setRGB(0, 0, imm.getWidth(), imm.getHeight(), pixels, 0, imm.getWidth());
+		/*
+		 * WritableImage wr = null; if (imm != null) { wr = new
+		 * WritableImage(imm.getWidth(), imm.getHeight()); PixelWriter pw =
+		 * wr.getPixelWriter(); for (int x = 0; x < imm.getWidth(); x++) { for
+		 * (int y = 0; y < imm.getHeight(); y++) { pw.setArgb(x, y,
+		 * imm.getRGB(x, y)); } } }
+		 */
+		return imm;// wr;
+	}
 
 	@FXML
 	protected void load() {
-		int width = 500, width2 = 300;// 500 300
+		int width = 2000, width2 = 1200;// 500 300
 		originalFrame.setFitWidth(width);
 		originalFrame2.setFitWidth(width);
 		originalFrame3.setFitWidth(width2);
@@ -78,11 +120,36 @@ public class Controller {
 
 		imageToShow = getFrame(blueStainsFilename);
 
+		countGroundTruth();
 		int SIZ_COLOR2 = SIZE;
 
 		double s = (double) SIZ_COLOR1 / (double) SIZ_COLOR2;
 		System.out.println(">>> Red stains: " + SIZ_COLOR1 + ", blue stains: " + SIZ_COLOR2 + ", result = " + s);
 		originalFrame2.setImage(imageToShow);
+
+	}
+
+	private void countGroundTruth() {
+		BufferedImage bi = null, bi2 = null;
+		try {
+			bi = ImageIO.read(new File(infoPic));//
+			bi2 = ImageIO.read(new File(infoPic));//
+
+		} catch (IOException e) {
+			System.out.println("Err " + e);
+		}
+
+		H = 0;
+		DAB = 0;
+		cells = 0;
+		BufferedImage b2 = countOnes(bi, CYAN);
+		setColors(b2, CYAN);
+		H = cells;
+		b2 = countOnes(bi2, BLUE);
+		setColors(b2, BLUE);
+		H += cells;
+		DAB = cells;
+		System.out.println("INFO RESULT: " + DAB + ", " + H + " = " + (DAB / H));
 
 	}
 
@@ -110,6 +177,24 @@ public class Controller {
 				else // if (SEGMENTATION_TYPE==Controller.THRESHOLDING)
 					frame = this.segmentationThresholding(frame);
 				imageToShow = mat2Image(frame);
+				// bi = countOnes(bi, BLUE);
+
+				// Mat m = bufferedImageToMat(bi);
+				// imageToShow = setColors(bi, BLUE);
+
+				// imageToShow = mat2Image(m);
+
+				WritableImage wr = null;
+				if (bi != null) {
+					wr = new WritableImage(bi.getWidth(), bi.getHeight());
+					PixelWriter pw = wr.getPixelWriter();
+					for (int x = 0; x < bi.getWidth(); x++) {
+						for (int y = 0; y < bi.getHeight(); y++) {
+							pw.setArgb(x, y, bi.getRGB(x, y));
+						}
+					}
+				}
+				// imageToShow = wr;
 			}
 
 		} catch (Exception e) {
@@ -204,7 +289,7 @@ public class Controller {
 
 		Mat cont = new Mat();
 
-		fin.copyTo(cont);// by³o 3/2
+		fin.copyTo(cont);// byï¿½o 3/2
 
 		final List<MatOfPoint> points = new ArrayList<>();
 		final Mat hierarchy = new Mat();
@@ -335,7 +420,7 @@ public class Controller {
 			Imgproc.drawContours(markersx, points, i, asc.get(i), -1);
 		}
 
-		System.out.println();
+		// System.out.println();
 		mm.clear();
 		for (int r = 0; r < markersx.rows(); r++) {
 			for (int cc = 0; cc < markersx.cols(); cc++) {
@@ -676,6 +761,7 @@ public class Controller {
 	}
 
 	private Mat setColors(Mat m) {
+
 		ArrayList<Scalar> asc = new ArrayList<>();
 
 		for (int i = 10; i < 250; i++)
@@ -818,7 +904,7 @@ public class Controller {
 		}
 		for (String k : keys) {
 			// x += mm.get(k);
-			mm.remove(k);
+			// mm.remove(k); TODO odkomentowac?
 		}
 		//
 
@@ -839,6 +925,196 @@ public class Controller {
 
 		// SIZE = mm.keySet().size();
 		return m;
+	}
+
+	private Image setColors(BufferedImage imm, Color col) {
+
+		ArrayList<Scalar> asc = new ArrayList<>();
+
+		for (int i = 10; i < 250; i++)
+			for (int j = 0; j < 250; j++)
+				asc.add(new Scalar(i, j, i));
+		Collections.shuffle(asc);
+		// m.convertTo(m, CvType.CV_8SC3);
+		// BufferedImage imm = m;// new BufferedImage(m.width(), m.height(),
+		// BufferedImage.TYPE_3BYTE_BGR);
+
+		// System.out.println("m " + m.size());
+		// System.out.println("w " + imm.getWidth());
+
+		int color = -1;
+		int[][] abc = new int[imm.getHeight()][imm.getWidth()];
+		FastRGB fast = new FastRGB(imm);
+		// m.convertTo(m, CvType.CV_32SC3);
+
+		int[][][] result = new int[imm.getHeight()][imm.getWidth()][4];
+		for (int x = 0; x < imm.getWidth(); x++) {
+			for (int y = 0; y < imm.getHeight(); y++) {
+				Color c = new Color(imm.getRGB(x, y), true);
+				result[y][x][0] = c.getRed();
+				result[y][x][1] = c.getGreen();
+				result[y][x][2] = c.getBlue();
+				result[y][x][3] = c.getAlpha();
+
+				if ((c.getRed() == col.getRed() && c.getGreen() == col.getGreen() && c.getBlue() == col.getBlue()))
+
+					abc[y][x] = 1;
+
+				else {
+					abc[y][x] = 0;
+
+				}
+			}
+		}
+
+		/*
+		 * for (int r = 0; r < imm.getWidth(); r++) { for (int cc = 0; cc <
+		 * imm.getHeight(); cc++) {
+		 * 
+		 * int[] data = new int[3]; int rgb = imm.getRGB(r, cc);// , data);
+		 * 
+		 * int rr = (rgb >> 16) & 0xFF; int g = (rgb >> 8) & 0xFF; int b = (rgb
+		 * & 0xFF); System.out.println("rgb " + r + " " + g + " " + b); if (!(rr
+		 * == 0 && g == 255 && b == 255))
+		 * 
+		 * abc[r][cc] = 1;
+		 * 
+		 * else abc[r][cc] = 0;
+		 * 
+		 * } }
+		 */
+
+		for (int i = 0; i < abc.length; i++) {
+			for (int j = 0; j < abc[0].length; j++) {
+				// System.out.println(abc[i][j] + " ");
+				if (abc[i][j] == 1) {
+					if (i == 0 && j == 0) {
+
+						abc[i][j] = color;
+					} else if (i == 0) {
+						if (abc[i][j - 1] != 0) {
+							abc[i][j] = color;
+						}
+					} else if (j == 0) {
+						if (abc[i - 1][j] != 0) {
+							abc[i][j] = color;
+						}
+
+						if (i + 1 < abc.length && abc[i + 1][j] != 0) {
+							abc[i][j] = color;
+						}
+					} else if ((j + 1 < abc[0].length && i - 1 >= 0 && j - 1 >= 0) && (abc[i - 1][j - 1] != 0
+							|| abc[i - 1][j] != 0 || abc[i - 1][j + 1] != 0 || abc[i][j - 1] != 0)) {
+						abc[i][j] = color;
+
+					} else {
+						abc[i][j] = --color;
+					}
+				}
+			}
+			// System.out.println();
+		}
+		boolean zmiana = true;
+		int c = 0;
+		while (zmiana && c < 50) {
+			c++;
+			// System.out.println("ZMIANA");
+			zmiana = false;
+			for (int i = 0; i < abc.length; i++) {
+				for (int j = 0; j < abc[0].length; j++) {
+					if (abc[i][j] != 0) {
+						if (j + 1 < abc[0].length && abc[i][j + 1] != 0 && abc[i][j + 1] > abc[i][j]) {
+							abc[i][j] = abc[i][j + 1];
+
+							zmiana = true;
+						} else {
+							if (j + 1 < abc[0].length && abc[i][j + 1] != 0 && abc[i][j + 1] < abc[i][j]) {
+								abc[i][j + 1] = abc[i][j];
+
+								zmiana = true;
+							}
+							if (i + 1 < abc.length && j - 1 >= 0 && abc[i + 1][j - 1] != 0
+									&& abc[i + 1][j - 1] < abc[i][j]) {
+								abc[i + 1][j - 1] = abc[i][j];
+								zmiana = true;
+							}
+							if (i + 1 < abc.length && abc[i + 1][j] != 0 && abc[i + 1][j] < abc[i][j]) {
+								abc[i + 1][j] = abc[i][j];
+								zmiana = true;
+							}
+							if (i + 1 < abc.length && j + 1 < abc[0].length && abc[i + 1][j + 1] != 0
+									&& abc[i + 1][j + 1] < abc[i][j]) {
+								abc[i + 1][j + 1] = abc[i][j];
+								zmiana = true;
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		int[] pixels2 = new int[imm.getWidth() * imm.getHeight()];
+		int count = 0;
+		for (int i = 0; i < abc.length; i++) {
+			for (int j = 0; j < abc[0].length; j++) {
+				// System.out.print(Math.abs(abc[i][j]) + " : ");
+				if (Math.abs(abc[i][j]) == 0) {
+					pixels2[count++] = 0;
+					continue;
+				}
+				Scalar ss = asc.get(Math.abs(abc[i][j]));
+				double[] d = ss.val;
+				int rgb = (int) d[0];
+				rgb = (rgb << 8) + (int) d[1];
+				rgb = (rgb << 8) + (int) d[2];
+				pixels2[count++] = rgb;
+
+			}
+			// System.out.println();
+		}
+		imm = new BufferedImage(imm.getWidth(), imm.getHeight(), BufferedImage.TYPE_INT_RGB);
+		imm.setRGB(0, 0, imm.getWidth(), imm.getHeight(), pixels2, 0, imm.getWidth());
+
+		// m = bufferedImageToMat(imm);
+		// System.out.println("ROWS " + m.rows());
+
+		int[] pixels = new int[imm.getWidth() * imm.getHeight()];
+		imm.getRGB(0, 0, imm.getWidth(), imm.getHeight(), pixels, 0, imm.getWidth());
+		// System.out.println("pix " + pixels.length + ",");
+		HashMap<String, Integer> mm = new HashMap<>();
+		for (int i = 0; i < pixels.length; i++) {
+			int rgb = pixels[i];
+			int r = (rgb >> 16) & 0xFF;
+			int g = (rgb >> 8) & 0xFF;
+			int b = (rgb & 0xFF);
+
+			/*
+			 * if (r == 255 && g == 255 && b == 255) { r = 10; g = 10; b = 10;
+			 * pixels[i] = 0xFF0A0A0A; } if (r == 0 && g == 0 && b == 0) {
+			 * pixels[i] = 0xFFFFFFFF; r = 255; b = 255; g = 255; }
+			 */
+			String pix = r + "|" + b + "|" + g;
+			if (mm.containsKey(pix))
+				mm.put(pix, mm.get(pix) + 1);
+			else
+				mm.put(pix, 1);
+		}
+		System.out.println("size " + mm.size());
+		cells = mm.size() / 2;
+
+		WritableImage wr = null;
+		if (imm != null) {
+			wr = new WritableImage(imm.getWidth(), imm.getHeight());
+			PixelWriter pw = wr.getPixelWriter();
+			for (int x = 0; x < imm.getWidth(); x++) {
+				for (int y = 0; y < imm.getHeight(); y++) {
+					pw.setArgb(x, y, imm.getRGB(x, y));
+				}
+			}
+		}
+
+		return wr;
 	}
 
 }

@@ -26,8 +26,9 @@ public class ImageSegmentation extends Application {
 	public static void main(String[] args) {
 		Controller.SEGMENTATION_TYPE = Controller.THRESHOLDING;
 		String path = "C:\\Users\\Olusiak\\Downloads\\Ki67 baza-20161012T160623Z\\Ki67 baza\\ROI wyciête\\";
-		Controller.redStainsFilename = path + "col2.jpg";
-		Controller.blueStainsFilename = path + "col1(2).jpg";
+		Controller.redStainsFilename = path + "coll2.jpg";
+		Controller.infoPic = path + "kopy3.png";
+		Controller.blueStainsFilename = path + "coll1.jpg";
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		launch(args);
 
